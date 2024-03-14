@@ -13,12 +13,12 @@ def get_stats_dir():
     ekphrasis_dir = os.getenv("EKPHRASIS_DIR")
     if ekphrasis_dir is None:
         home = expanduser("~")
-        ekphrasis_dir = path.join(home, '.ekphrasis')
+        ekphrasis_dir = path.join(home, ".ekphrasis")
 
     if not os.path.exists(ekphrasis_dir):
         os.makedirs(ekphrasis_dir)
 
-    stats_dir = path.join(ekphrasis_dir, 'stats')
+    stats_dir = path.join(ekphrasis_dir, "stats")
 
     if not os.path.exists(stats_dir):
         os.makedirs(stats_dir)
@@ -26,7 +26,7 @@ def get_stats_dir():
     return stats_dir
 
 
-def parse_stats(name, sep='\t', ngram_sep='_'):
+def parse_stats(name, sep="\t", ngram_sep="_"):
     """
     Read key,value pairs from file.
     """
@@ -48,8 +48,7 @@ def read_stats(corpus, ngram):
     check_stats_files()
     print("Reading " + "{} - {}grams ...".format(corpus, ngram))
     text = path.join(*[stats_dir, corpus, "counts_{}grams.txt".format(ngram)])
-    dumped = path.join(
-        *[stats_dir, corpus, "counts_{}grams.json".format(ngram)])
+    dumped = path.join(*[stats_dir, corpus, "counts_{}grams.json".format(ngram)])
 
     if os.path.isfile(dumped):
         with open(dumped, "r") as f:
@@ -67,14 +66,14 @@ def read_stats(corpus, ngram):
 
 
 def listdir_nohidden(path):
-    return [f for f in os.listdir(path) if not f.startswith('.')]
+    return [f for f in os.listdir(path) if not f.startswith(".")]
 
 
 def download_statistics():
     stats_dir = get_stats_dir()
     print("Word statistics files not found!\nDownloading...", end=" ")
     # url = "https://www.dropbox.com/s/a84otqrg6u1c5je/stats.zip?dl=1"
-    url = "https://data.statmt.org/cbaziotis/projects/ekphrasis/stats.zip"
+    url = "https://drive.usercontent.google.com/download?id=1kpkeINl9PG267aKkrNpsKnLkNlxdEKsB&export=download&authuser=0&confirm=t&uuid=95f80bb3-e3ed-40fc-97a7-ac86f9a035c0&at=APZUnTXC1q7075kOxXApB3pgk4kS:1710460283708"
     urlretrieve(url, "stats.zip")
     print("done!")
 
@@ -98,11 +97,13 @@ def product(nums):
     """
     return reduce(operator.mul, nums, 1)
 
+
 def remove_tags(doc):
     """
     Remove tags from sentence
     """
-    doc = ' '.join(word for word in doc.split() if word[0]!='<')
+    doc = " ".join(word for word in doc.split() if word[0] != "<")
     return doc
+
 
 # check_stats_files()
