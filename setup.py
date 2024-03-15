@@ -22,7 +22,7 @@ setup(
         "nltk",
         "ftfy",
         "numpy",
-        "git+https://github.com/Haruray/emot.git",
+        "emot",
     ],
     include_package_data=True,
 )
