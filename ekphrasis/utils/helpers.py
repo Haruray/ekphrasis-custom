@@ -74,7 +74,9 @@ def download_statistics():
     print("Word statistics files not found!\nDownloading...", end=" ")
     # url = "https://www.dropbox.com/s/a84otqrg6u1c5je/stats.zip?dl=1"
     # url = "https://data.statmt.org/cbaziotis/projects/ekphrasis/stats.zip"
-    url = "https://p-def5.pcloud.com/cBZhONNVIZFPNCsH7ZZZoDUn7kZ2ZZ2WRZkZlVGDRZOpZ1zZ0LZK4ZnzZ3HZx8ZB4Za8ZkpZvpZTRZb4ZxpZ7DPF0Z02io8NnNaF0e7BazkHqNoQavS2yk/stats.zip"
+    # url = "https://p-def5.pcloud.com/cBZhONNVIZFPNCsH7ZZZoDUn7kZ2ZZ2WRZkZlVGDRZOpZ1zZ0LZK4ZnzZ3HZx8ZB4Za8ZkpZvpZTRZb4ZxpZ7DPF0Z02io8NnNaF0e7BazkHqNoQavS2yk/stats.zip"
+
+    url = "https://www.dropbox.com/scl/fi/bqun8tyh1jm7ku60pjrrh/stats.zip?rlkey=tj2k6fo1dr3qr1bqvls9dc8u6&dl=1"
     urlretrieve(url, "stats.zip")
     print("done!")
 
