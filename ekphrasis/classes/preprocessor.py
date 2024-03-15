@@ -2,12 +2,14 @@ import re
 from functools import lru_cache
 
 import ftfy
+import emot
 
 from ekphrasis.classes.exmanager import ExManager
 from ekphrasis.classes.segmenter import Segmenter
 from ekphrasis.classes.spellcorrect import SpellCorrector
 from ekphrasis.utils.nlp import unpack_contractions
 from ekphrasis.utils.helpers import remove_tags
+
 
 # noinspection PyPackageRequirements
 class TextPreProcessor:
@@ -72,7 +74,7 @@ class TextPreProcessor:
 
             fix_text (bool): choose if you want to fix bad unicode terms and
                 html entities.
-            
+
             remove_tags (bool): Choose to remove tags after processing
         """
         self.omit = kwargs.get("omit", {})
@@ -90,6 +92,9 @@ class TextPreProcessor:
         self.all_caps_tag = kwargs.get("all_caps_tag", "wrap")
         self.mode = kwargs.get("mode", "normal")
         self.remove_tags = kwargs.get("remove_tags", False)
+        self.demojize = kwargs.get("demojize", False)
+        if self.demojize:
+            self.emot_obj = emot.core.emot()
 
         if self.unpack_hashtags:
             self.segmenter = Segmenter(corpus=self.segmenter_corpus)
@@ -97,9 +102,11 @@ class TextPreProcessor:
             self.spell_corrector = SpellCorrector(corpus=self.corrector_corpus)
 
         self.regexes = ExManager().get_compiled()
-        if 'hashtag' in self.omit or 'hashtag' in self.backoff:
-            print("You can't omit/backoff and unpack hashtags!\n "
-                  "unpack_hashtags will be set to False")
+        if "hashtag" in self.omit or "hashtag" in self.backoff:
+            print(
+                "You can't omit/backoff and unpack hashtags!\n "
+                "unpack_hashtags will be set to False"
+            )
             self.unpack_hashtags = False
 
     def __copy__(self):
@@ -122,8 +129,7 @@ class TextPreProcessor:
             return " ".join([" <{}> {} </{}> ".format(tag, text, tag)]) + " "
         elif mode == "every":
             tokens = text.split()
-            processed = " ".join([" {} <{}> ".format(t, tag)
-                                  for t in tokens])
+            processed = " ".join([" {} <{}> ".format(t, tag) for t in tokens])
             return " " + processed + " "
 
     @lru_cache(maxsize=65536)
@@ -145,7 +151,7 @@ class TextPreProcessor:
 
         else:
             # split words following CamelCase convention
-            expanded = self.regexes["camel_split"].sub(r' \1', text)
+            expanded = self.regexes["camel_split"].sub(r" \1", text)
             expanded = expanded.replace("-", "")
             expanded = expanded.replace("_", "")
             # print(m.group(), " - ", expanded)
@@ -158,15 +164,14 @@ class TextPreProcessor:
     def handle_elongated_match(self, m):
         text = m.group()
         # normalize to at most 2 repeating chars
-        text = self.regexes["normalize_elong"].sub(r'\1\1', text)
+        text = self.regexes["normalize_elong"].sub(r"\1\1", text)
         normalized = self.spell_corrector.normalize_elongated(text)
         if normalized:
             text = normalized
 
         # try to spell correct the word
         if self.spell_correct_elong:
-            text = self.spell_corrector.correct_word(text, assume_wrong=True,
-                                                     fast=True)
+            text = self.spell_corrector.correct_word(text, assume_wrong=True, fast=True)
             # with open("analysis/spell_corrector_" +
             # self.corrector_corpus + ".txt", "a") as f:
             #     f.write(m.group() + " - " + text + "\n")
@@ -176,7 +181,6 @@ class TextPreProcessor:
             text = self.add_special_tag(text, "elongated")
 
         return text
-    
 
     @lru_cache(maxsize=65536)
     def handle_repeated_puncts(self, m):
@@ -248,7 +252,7 @@ class TextPreProcessor:
 
     def pre_process_doc(self, doc):
 
-        doc = re.sub(r' +', ' ', doc)  # remove repeating spaces
+        doc = re.sub(r" +", " ", doc)  # remove repeating spaces
 
         # ###########################
         # # fix bad unicode
@@ -273,17 +277,17 @@ class TextPreProcessor:
         for item in self.backoff:
             # better add an extra space after the match.
             # Just to be safe. extra spaces will be normalized later anyway
-            doc = self.regexes[item].sub(lambda m: " " + "<" + item + ">" + " ",
-                                         doc)
+            doc = self.regexes[item].sub(lambda m: " " + "<" + item + ">" + " ", doc)
         for item in self.omit:
-            doc = doc.replace("<" + item + ">", '')
+            doc = doc.replace("<" + item + ">", "")
 
         ###########################
         # unpack hashtags
         ###########################
         if self.unpack_hashtags:
             doc = self.regexes["hashtag"].sub(
-                lambda w: self.handle_hashtag_match(w), doc)
+                lambda w: self.handle_hashtag_match(w), doc
+            )
 
         ###########################
         # handle special cases
@@ -291,26 +295,32 @@ class TextPreProcessor:
         if self.mode != "fast":
             if "allcaps" in self.include_tags:
                 doc = self.regexes["allcaps"].sub(
-                    lambda w: self.handle_generic_match(w, "allcaps",
-                                                        mode=self.all_caps_tag),
-                    doc)
+                    lambda w: self.handle_generic_match(
+                        w, "allcaps", mode=self.all_caps_tag
+                    ),
+                    doc,
+                )
 
             if "elongated" in self.include_tags:
                 doc = self.regexes["elongated"].sub(
-                    lambda w: self.handle_elongated_match(w), doc)
+                    lambda w: self.handle_elongated_match(w), doc
+                )
 
             if "repeated" in self.include_tags:
                 doc = self.regexes["repeat_puncts"].sub(
-                    lambda w: self.handle_repeated_puncts(w), doc)
+                    lambda w: self.handle_repeated_puncts(w), doc
+                )
 
             if "emphasis" in self.include_tags:
                 doc = self.regexes["emphasis"].sub(
-                    lambda w: self.handle_emphasis_match(w), doc)
+                    lambda w: self.handle_emphasis_match(w), doc
+                )
 
             if "censored" in self.include_tags:
                 doc = self.regexes["censored"].sub(
-                    lambda w: self.handle_generic_match(w, "censored"), doc)
-        
+                    lambda w: self.handle_generic_match(w, "censored"), doc
+                )
+
         ###########################
         # unpack contractions: i'm -> i am, can't -> can not...
         ###########################
@@ -321,12 +331,29 @@ class TextPreProcessor:
 
         if self.remove_tags:
             doc = remove_tags(doc)
-     
+
         # omit allcaps if inside hashtags
-        doc = re.sub(r' +', ' ', doc)  # remove repeating spaces
+        doc = re.sub(r" +", " ", doc)  # remove repeating spaces
         # doc = re.sub(r'<hashtag><allcaps>', '<hashtag>', doc)  # remove repeating spaces
         # doc = doc.replace('<hashtag> <allcaps>', '<hashtag>')
         # doc = doc.replace('</allcaps> </hashtag>', '</hashtag>')
+
+        ###########################
+        # DEMOJIZE
+        ###########################
+        if self.demojize:
+            detected_emots = self.emot_obj.emoji(doc)
+            # example output
+            # {'value': ['☮', '🙂', '❤'], 'location': [[14, 15], [16, 17], [18, 19]], 'mean': [':peace_symbol:',
+            # ':slightly_smiling_face:', ':red_heart:'], 'flag': True}
+            for e in detected_emots["value"]:
+                if detected_emots["flag"]:
+                    doc = doc.replace(
+                        e,
+                        " "
+                        + detected_emots["mean"][detected_emots["value"].index(e)]
+                        + " ",
+                    )
 
         ###########################
         # Tokenize
@@ -346,5 +373,6 @@ class TextPreProcessor:
 
     def pre_process_docs(self, docs, lazy=True):
         from tqdm import tqdm
+
         for d in tqdm(docs, desc="PreProcessing..."):
             yield self.pre_process_doc(d)
