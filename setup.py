@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="ekphrasis",
-    version="0.5.51",
+    version="0.5.52",
     description="Text processing tool, geared towards text from "
     "social networks, such as Twitter or Facebook. "
     "Ekphrasis performs tokenization, word normalization, "
@@ -23,6 +23,7 @@ setup(
         "ftfy",
         "numpy",
         "emot",
+        "mtranslate",
     ],
     include_package_data=True,
 )

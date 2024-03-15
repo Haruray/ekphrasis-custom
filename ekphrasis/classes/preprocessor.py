@@ -3,6 +3,7 @@ from functools import lru_cache
 
 import ftfy
 import emot
+from mtranslate import translate
 
 from ekphrasis.classes.exmanager import ExManager
 from ekphrasis.classes.segmenter import Segmenter
@@ -95,6 +96,7 @@ class TextPreProcessor:
         self.demojize = kwargs.get("demojize", False)
         if self.demojize:
             self.emot_obj = emot.core.emot()
+        self.demojize_lang = kwargs.get("demojize_lang", "en")
 
         if self.unpack_hashtags:
             self.segmenter = Segmenter(corpus=self.segmenter_corpus)
@@ -348,11 +350,17 @@ class TextPreProcessor:
             # ':slightly_smiling_face:', ':red_heart:'], 'flag': True}
             for e in detected_emots["value"]:
                 if detected_emots["flag"]:
+                    emoticon_meaning = detected_emots["mean"][
+                        detected_emots["value"].index(e)
+                    ]
+                    # translate if needed
+                    if self.demojize_lang != "en":
+                        emoticon_meaning = translate(
+                            emoticon_meaning, self.demojize_lang
+                        )
                     doc = doc.replace(
                         e,
-                        " "
-                        + detected_emots["mean"][detected_emots["value"].index(e)]
-                        + " ",
+                        " " + emoticon_meaning + " ",
                     )
 
         ###########################
